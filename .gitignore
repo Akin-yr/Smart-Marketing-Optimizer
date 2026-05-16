@@ -1,0 +1,17 @@
+# Tránh push môi trường ảo
+.venv/
+venv/
+env/
+
+# Tránh push file cấu hình và tài khoản bảo mật (Tuyệt đối không đẩy lên)
+credentials.json
+token.json
+config/database.ini
+
+# Tránh push các file rác của Python sinh ra khi chạy code
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Tránh push file lưu lịch sử cấu hình của VS Code (nếu có)
+.vscode/
