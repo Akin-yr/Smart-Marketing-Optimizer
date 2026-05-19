@@ -1,4 +1,6 @@
 # Tránh push môi trường ảo
+# Giấu môi trường ảo của m
+__pycache__/
 .venv/
 venv/
 env/
@@ -15,3 +17,11 @@ __pycache__/
 
 # Tránh push file lưu lịch sử cấu hình của VS Code (nếu có)
 .vscode/
+
+# Giấu file cấu hình database bí mật của Streamlit
+.streamlit/secrets.toml
+
+# Giấu các file mô hình đóng gói nặng nề (để trên Git sẽ bị quá tải dung lượng)
+*.pkl
+src/*.pkl
+notebooks/*.pkl
