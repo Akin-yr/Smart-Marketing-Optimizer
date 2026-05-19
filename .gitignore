@@ -1,9 +1,8 @@
 # Tránh push môi trường ảo
-# Giấu môi trường ảo của m
-__pycache__/
 .venv/
 venv/
 env/
+.env
 
 # Tránh push file cấu hình và tài khoản bảo mật (Tuyệt đối không đẩy lên)
 credentials.json

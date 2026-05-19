@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  smart-marketing-app:
+    build: .
+    container_name: marketing_optimizer_container
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    env_file:
+      - .env 
+    restart: always
