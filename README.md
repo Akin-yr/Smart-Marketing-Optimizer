@@ -193,3 +193,6 @@ token.json
 | `holidays` | Calendar ngày lễ Việt Nam |
 | `scipy` | Tối ưu trọng số ensemble |
 | `pandas` / `numpy` | Xử lý dữ liệu |
+
+--
+![WEB DEMO](assets/demo.gif)
