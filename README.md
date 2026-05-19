@@ -194,5 +194,4 @@ token.json
 | `scipy` | Tối ưu trọng số ensemble |
 | `pandas` / `numpy` | Xử lý dữ liệu |
 
---
-[WEB DEMO](assets/Smart_Marketing_Optimizer.mp4)
+[WEB DEMO](https://streamable.com/pufujp)
