@@ -195,4 +195,4 @@ token.json
 | `pandas` / `numpy` | Xử lý dữ liệu |
 
 --
-![WEB DEMO](assets/Smart_Marketing_Optimizer.mp4)
+[WEB DEMO](assets/Smart_Marketing_Optimizer.mp4)
