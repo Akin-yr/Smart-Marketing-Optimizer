@@ -1,173 +1,173 @@
 # Smart Marketing Optimizer 🚀
 
-Hệ thống dự báo doanh thu và tối ưu hóa chiến dịch Marketing sử dụng Ensemble Learning (LightGBM + XGBoost + Prophet), kết nối trực tiếp **Supabase PostgreSQL** và triển khai qua **Docker**.
+A revenue forecasting and marketing campaign optimization system using Ensemble Learning (LightGBM + XGBoost + Prophet), connected directly to **Supabase PostgreSQL** and deployed via **Docker**.
 
 ---
 
-## 📌 1. Giới thiệu (Introduction)
+## 📌 1. Introduction
 
-Dự án xây dựng một công cụ hỗ trợ ra quyết định (Decision Support Tool) dành cho doanh nghiệp, kết hợp các mô hình học máy tiên tiến qua phương pháp **Weighted Ensemble** được tối ưu bằng Nelder-Mead trên tập Validation nhằm:
+This project builds a Decision Support Tool for businesses, combining advanced machine learning models through a **Weighted Ensemble** method automatically optimized via Nelder-Mead on the Validation set, designed to:
 
-- Dự báo chính xác xu hướng **Doanh thu (Revenue)** và **Giá vốn hàng bán (COGS)** theo ngày.
-- Tối ưu hóa ngân sách và đánh giá hiệu quả chiến dịch Marketing.
-- Trực quan hóa dữ liệu thời gian thực qua Dashboard **Streamlit** kết nối **Cloud Database (Supabase PostgreSQL)**.
+- Accurately forecast **Revenue** and **Cost of Goods Sold (COGS)** trends on a daily basis.
+- Optimize budgets and evaluate marketing campaign effectiveness.
+- Visualize real-time data through a **Streamlit** Dashboard connected to a **Cloud Database (Supabase PostgreSQL)**.
 
 ---
 
-## 📂 2. Cấu trúc thư mục (Project Structure)
+## 📂 2. Project Structure
 
 ```text
 Smart_Marketing_Optimizer/
 │
 ├── .streamlit/
-│   └── secrets.toml            # [LOCAL ONLY] Cấu hình secrets (đã thêm vào .gitignore)
+│   └── secrets.toml            # [LOCAL ONLY] Secrets config (added to .gitignore)
 │
 ├── notebooks/
-│   ├── Forecast_EDA_insights.ipynb         # EDA & phân tích đặc trưng
-│   └── Smart_Marketing_Model_fixe.ipynb    # Nghiên cứu & kiểm chứng mô hình
+│   ├── Forecast_EDA_insights.ipynb         # EDA & feature analysis
+│   └── Smart_Marketing_Model_fixe.ipynb    # Model research & validation
 │
 ├── src/
 │   ├── app.py                  # Streamlit Dashboard
-│   ├── bundle.py               # Huấn luyện & lưu model bundle
+│   ├── bundle.py               # Model training & bundle saving
 │   ├── etl.py                  # ETL pipeline
 │   ├── forecast_pipeline.py    # Feature engineering & inference pipeline
-│   └── model_bundle.pkl        # Trained models + metadata (đã thêm vào .gitignore)
+│   └── model_bundle.pkl        # Trained models + metadata (added to .gitignore)
 │
-├── .env                        # [LOCAL ONLY] Biến môi trường (đã thêm vào .gitignore)
-├── .env.example                # File cấu hình mẫu cho deploy
+├── .env                        # [LOCAL ONLY] Environment variables (added to .gitignore)
+├── .env.example                # Sample config file for deployment
 ├── .gitignore
-├── credentials.json            # [LOCAL ONLY] GCP credentials nếu dùng
-├── docker-compose.yml          # Điều phối container
-├── Dockerfile                  # Build image ứng dụng
-├── migrate_db.py               # Script migrate dữ liệu lên Cloud
-├── requirements.txt            # Danh sách thư viện & phiên bản
+├── credentials.json            # [LOCAL ONLY] GCP credentials (if used)
+├── docker-compose.yml          # Container orchestration
+├── Dockerfile                  # Application image build
+├── migrate_db.py               # Data migration script to Cloud
+├── requirements.txt            # Library list & versions
 └── README.md
 ```
 
 ---
 
-## 🧠 3. Kiến trúc mô hình (Model Architecture)
+## 🧠 3. Model Architecture
 
-Hệ thống sử dụng **Weighted Ensemble** gồm 4 base model, trọng số được tối ưu tự động trên tập Validation:
+The system uses a **Weighted Ensemble** of 4 base models, with weights automatically optimized on the Validation set:
 
-| Model | Mục tiêu | Ghi chú |
+| Model | Target | Notes |
 |---|---|---|
 | LightGBM (MAE) | Revenue & COGS | 5 seeds, log-transform target |
 | XGBoost (MAE) | Revenue & COGS | 5 seeds, log-transform target |
-| Prophet + LightGBM Residual | Revenue & COGS | Hybrid: Prophet bắt trend/mùa vụ, LGB bắt phần dư |
-| LightGBM (Tweedie) | Revenue & COGS | Robust với phân phối lệch phải |
+| Prophet + LightGBM Residual | Revenue & COGS | Hybrid: Prophet captures trend/seasonality, LGB captures residuals |
+| LightGBM (Tweedie) | Revenue & COGS | Robust against right-skewed distributions |
 
-Ngoài ra có thêm **LightGBM Q90** (quantile 0.9) được blend vào dự báo cuối để tăng độ bảo thủ.
+Additionally, **LightGBM Q90** (quantile 0.9) is blended into the final forecast to increase conservatism.
 
-### Feature Engineering nổi bật
+### Key Feature Engineering
 
 - **Calendar features:** day, month, quarter, dayofweek, weekofyear, is_weekend, is_holiday (VN)
-- **Tết Nguyên Đán:** tet_distance, tet_proximity, tet_phase (pre21/pre7/week/post7/far_after)
+- **Lunar New Year (Tết):** tet_distance, tet_proximity, tet_phase (pre21/pre7/week/post7/far_after)
 - **Flash sale events:** 9.9, 10.10, 11.11, 12.12, Black Friday, event windows
-- **Lag features:** Revenue/COGS lag 549–1460 ngày (safe lags để tránh data leakage)
-- **Rolling features:** mean/std/max trên cửa sổ 7–180 ngày
+- **Lag features:** Revenue/COGS lag 549–1460 days (safe lags to avoid data leakage)
+- **Rolling features:** mean/std/max over 7–180 day windows
 - **Exogenous:** web traffic, promotions, inventory, order metrics
-- **Trend polynomial:** bậc 2 fit trên log(revenue/cogs)
+- **Trend polynomial:** degree-2 fit on log(revenue/cogs)
 
 ---
 
-## 📊 4. Mô tả dữ liệu (Data Description)
+## 📊 4. Data Description
 
-Hệ thống kết nối trực tiếp **Supabase PostgreSQL**, bao gồm các bảng:
+The system connects directly to **Supabase PostgreSQL**, including the following tables:
 
-| Bảng | Mô tả |
+| Table | Description |
 |---|---|
-| `sales` | Doanh thu (`revenue`) và giá vốn (`cogs`) theo ngày |
-| `sample_submission` | Danh sách ngày cần dự báo |
-| `orders` | Đơn hàng theo ngày |
-| `order_items` | Chi tiết sản phẩm trong đơn hàng |
-| `promotions` | Các chương trình khuyến mãi (start_date, end_date, discount_value) |
-| `web_traffic` | Sessions, page views, bounce rate, avg session duration theo ngày |
-| `inventory` | Tồn kho, fill rate, stockout flag, days of supply |
+| `sales` | Daily revenue (`revenue`) and cost of goods sold (`cogs`) |
+| `sample_submission` | List of dates to forecast |
+| `orders` | Daily orders |
+| `order_items` | Product details within orders |
+| `promotions` | Promotional campaigns (start_date, end_date, discount_value) |
+| `web_traffic` | Sessions, page views, bounce rate, avg session duration per day |
+| `inventory` | Stock levels, fill rate, stockout flag, days of supply |
 
 ---
 
-## 🛡️ 5. Độ tin cậy mô hình (Model Reliability)
+## 🛡️ 5. Model Reliability
 
-Trọng số ensemble được tối ưu bằng **Nelder-Mead** trên tập Validation (từ 2022-01-01 đến cuối train). Các chỉ số đánh giá:
+Ensemble weights are optimized using **Nelder-Mead** on the Validation set (from 2022-01-01 to end of training). Evaluation metrics:
 
-**Hệ số xác định R²:**
+**Coefficient of Determination R²:**
 
 $$R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}$$
 
-**Sai số phần trăm tuyệt đối trung bình (MAPE):**
+**Mean Absolute Percentage Error (MAPE):**
 
 $$\text{MAPE} = \frac{1}{n}\sum_{i=1}^{n}\left|\frac{y_i - \hat{y}_i}{y_i}\right| \times 100\%$$
 
 ---
 
-## ⚙️ 6. Hướng dẫn cài đặt & chạy (Setup & Run)
+## ⚙️ 6. Setup & Run
 
-### Yêu cầu
+### Requirements
 
 - Python 3.10+
-- Docker & Docker Compose (nếu chạy container)
-- PostgreSQL (local hoặc Supabase)
+- Docker & Docker Compose (for container deployment)
+- PostgreSQL (local or Supabase)
 
-### Chạy local
+### Run Locally
 
 ```bash
 # 1. Clone repo
 git clone https://github.com/<your-username>/Smart_Marketing_Optimizer.git
 cd Smart_Marketing_Optimizer
 
-# 2. Cài thư viện
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Cấu hình database
+# 3. Configure database
 cp .env.example .env
-# Chỉnh DATABASE_URL trong .env
+# Edit DATABASE_URL in .env
 
-# 4. Huấn luyện mô hình (chỉ cần chạy 1 lần, mất ~20–40 phút)
+# 4. Train the model (only needed once, takes ~20–40 minutes)
 python src/bundle.py
 
-# 5. Chạy dashboard
+# 5. Run dashboard
 streamlit run src/app.py
 ```
 
-### Chạy bằng Docker
+### Run with Docker
 
 ```bash
 # Build & start
 docker-compose up --build
 
-# App sẽ chạy tại http://localhost:8501
+# App will be available at http://localhost:8501
 ```
 
-### Cấu hình `.env`
+### `.env` Configuration
 
 ```env
 DATABASE_URL=postgresql://user:password@host:5432/dbname
 ```
 
-### Cấu hình Streamlit Secrets (`.streamlit/secrets.toml`)
+### Streamlit Secrets Configuration (`.streamlit/secrets.toml`)
 
 ```toml
 DATABASE_URL = "postgresql://user:password@host:5432/dbname"
 ```
 
-> **Ưu tiên kết nối DB:** UI input → `DATABASE_URL` env var → Streamlit secrets → localhost fallback
+> **DB connection priority:** UI input → `DATABASE_URL` env var → Streamlit secrets → localhost fallback
 
 ---
 
 ## 🐳 7. Docker
 
-`Dockerfile` build image Python, cài toàn bộ dependencies từ `requirements.txt` và expose port 8501.
+`Dockerfile` builds a Python image, installs all dependencies from `requirements.txt`, and exposes port 8501.
 
-`docker-compose.yml` điều phối:
-- Service `app`: Streamlit dashboard
-- Mount `model_bundle.pkl` vào container (bundle được train sẵn, không train lại trong Docker)
+`docker-compose.yml` orchestrates:
+- `app` service: Streamlit dashboard
+- Mounts `model_bundle.pkl` into the container (pre-trained bundle — no retraining inside Docker)
 
 ---
 
-## 🔐 8. Bảo mật (Security)
+## 🔐 8. Security
 
-Các file sau đã được thêm vào `.gitignore`, **không được commit lên GitHub**:
+The following files are added to `.gitignore` and **must not be committed to GitHub**:
 
 ```
 .env
@@ -179,19 +179,19 @@ token.json
 
 ---
 
-## 📦 9. Dependencies chính
+## 📦 9. Main Dependencies
 
-| Thư viện | Mục đích |
+| Library | Purpose |
 |---|---|
 | `lightgbm` | Gradient boosting model |
 | `xgboost` | Gradient boosting model |
 | `prophet` | Time series trend & seasonality |
 | `streamlit` | Dashboard UI |
-| `sqlalchemy` | Kết nối PostgreSQL |
-| `joblib` | Serialize model bundle |
-| `lunardate` | Tính ngày Tết Nguyên Đán |
-| `holidays` | Calendar ngày lễ Việt Nam |
-| `scipy` | Tối ưu trọng số ensemble |
-| `pandas` / `numpy` | Xử lý dữ liệu |
+| `sqlalchemy` | PostgreSQL connection |
+| `joblib` | Model bundle serialization |
+| `lunardate` | Vietnamese Lunar New Year calculation |
+| `holidays` | Vietnamese public holiday calendar |
+| `scipy` | Ensemble weight optimization |
+| `pandas` / `numpy` | Data processing |
 
 [WEB DEMO](https://streamable.com/pufujp)
