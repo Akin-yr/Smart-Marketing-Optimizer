@@ -18,7 +18,6 @@ def load_bundle():
 
 bundle = load_bundle()
 
-# ── Sidebar ──────────────────────────────────────────────────
 st.sidebar.header("⚙️ Configuration")
 
 db_input = st.sidebar.text_input(
@@ -57,7 +56,6 @@ if start_date >= end_date:
     st.sidebar.error("⚠️ Start date must be before end date.")
     st.stop()
 
-# ── Forecast Button ───────────────────────────────────────────
 if st.button("🚀 Run Forecast", type="primary"):
     with st.spinner("AI model is processing..."):
         try:
